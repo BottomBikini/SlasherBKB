@@ -1,11 +1,11 @@
 import os
-import sys
-from PyQt5.QtWidgets import QWidget, QLineEdit, QLabel, QApplication, QFrame, QGridLayout, QPushButton, QCheckBox, \
+from PyQt5.QtWidgets import QWidget, QLineEdit, QLabel, QFrame, QGridLayout, QPushButton, QCheckBox, \
     QComboBox, QProgressBar, QFileDialog
-from PyQt5.QtGui import QIcon, QPalette, QColor, QDesktopServices
+from PyQt5.QtGui import QDesktopServices
 from PyQt5.QtCore import QUrl, QTimer
 from time import time
 import SlasherBKBCore as sbc
+import BaseFunc as bd
 
 
 class SlasherBKB(QWidget):
@@ -18,7 +18,7 @@ class SlasherBKB(QWidget):
         self.width_enforce_type = None
         self.scan_line_step = None
         self.ignorable_edges_pixels = None
-        self.slicing_senstivity = None
+        self.slicing_sensitivity = None
         self.show_advanced_settings = None
         self.output_files_type = None
         self.num_split = None
@@ -42,7 +42,7 @@ class SlasherBKB(QWidget):
         self.output_files_type = ".png"
         # Расширенные настройки
         self.show_advanced_settings = False
-        self.slicing_senstivity = QLineEdit("90")
+        self.slicing_sensitivity = QLineEdit("90")
         self.ignorable_edges_pixels = QLineEdit("10")
         self.scan_line_step = QLineEdit("5")
         self.width_enforce_type = "Без соблюдения ширины"
@@ -52,64 +52,51 @@ class SlasherBKB(QWidget):
         # Статусы
         self.status = QLabel("Простой")
         self.progress_value = 0
-        ####
-        self.show_subprocess_settings = False
-        self.enable_subprocess_execution = False
-        self.subprocess_path = ''
-        self.subprocess_arguments = ''
 
     def initUI(self):
         self.variables()
-        # GUI
-        self.set_dark_background()
-        self.setGeometry(0, 0, 400, 300)  # Set your window size here
-
-        screen = QApplication.instance().desktop().screenGeometry()
-        x = (screen.width() - self.width()) // 2
-        y = (screen.height() - self.height()) // 2
-        self.move(x, y)
-        self.setWindowTitle('SlasherBKB')
-        self.setWindowIcon(QIcon('res/SlasherBKBLogo.ico'))
-
+        bd.create_table_recent()
         # Первый блок параметров
-        paths_frame = QFrame(self)
-        paths_frame.setFrameShape(QFrame.Box)
-        paths_frame.setStyleSheet("QFrame { border: 1px solid white;}")
-        paths_layout = QGridLayout(paths_frame)
-        self.setup_paths_frame(paths_layout)
+        self.paths_frame = QFrame(self)
+        self.paths_frame.setFrameShape(QFrame.Box)
+        self.paths_frame.setStyleSheet("QFrame { border: 1px solid white;}")
+        self.paths_layout = QGridLayout(self.paths_frame)
+        self.setup_paths_frame(self.paths_layout)
 
         # Второй блок параметров
-        basic_frame = QFrame(self)
-        basic_frame.setFrameShape(QFrame.Box)
-        basic_frame.setStyleSheet("QFrame { border: 1px solid white;}")
-        basic_layout = QGridLayout(basic_frame)
-        self.setup_basic_frame(basic_layout)
+        self.basic_frame = QFrame(self)
+        self.basic_frame.setFrameShape(QFrame.Box)
+        self.basic_frame.setStyleSheet("QFrame { border: 1px solid white;}")
+        self.basic_layout = QGridLayout(self.basic_frame)
+        self.setup_basic_frame(self.basic_layout)
 
         # Третий блок параметров
-        advanced_frame = QFrame(self)
-        advanced_frame.setFrameShape(QFrame.Box)
-        advanced_frame.setStyleSheet("QFrame { border: 1px solid white;}")
-        advanced_layout = QGridLayout(advanced_frame)
-        self.setup_advanced_frame(advanced_layout)
+        self.advanced_frame = QFrame(self)
+        self.advanced_frame.setFrameShape(QFrame.Box)
+        self.advanced_frame.setStyleSheet("QFrame { border: 1px solid white;}")
+        self.advanced_layout = QGridLayout(self.advanced_frame)
+        self.setup_advanced_frame(self.advanced_layout)
 
         # Четвёртый блок параметров
-        subprocess_frame = QFrame(self)
-        subprocess_frame.setFrameShape(QFrame.Box)
-        subprocess_frame.setStyleSheet("QFrame { border: 1px solid white;}")
-        subprocess_layout = QGridLayout(subprocess_frame)
-        self.setup_subprocess_frame(subprocess_layout)
+        self.subprocess_frame = QFrame(self)
+        self.subprocess_frame.setFrameShape(QFrame.Box)
+        self.subprocess_frame.setStyleSheet("QFrame { border: 1px solid white;}")
+        self.subprocess_layout = QGridLayout(self.subprocess_frame)
+        self.setup_subprocess_frame(self.subprocess_layout)
 
         # Размещаем блоки
-        main_layout = QGridLayout(self)
-        main_layout.setColumnStretch(0, 0)
-        main_layout.setRowStretch(0, 0)
-        main_layout.setRowStretch(1, 0)
-        main_layout.setRowStretch(2, 0)
-        main_layout.setRowStretch(3, 0)
-        main_layout.addWidget(paths_frame, 0, 0)
-        main_layout.addWidget(basic_frame, 1, 0)
-        main_layout.addWidget(advanced_frame, 2, 0)
-        main_layout.addWidget(subprocess_frame, 3, 0)
+        self.unload_resent()
+        self.main_layout = QGridLayout(self)
+        # self.main_layout.setColumnStretch(0, 0)
+        # self.main_layout.setRowStretch(0, 0)
+        # self.main_layout.setRowStretch(1, 0)
+        self.main_layout.setRowStretch(2, 0)
+        # self.main_layout.setRowStretch(3, 0)
+
+        self.main_layout.addWidget(self.paths_frame, 0, 0)
+        self.main_layout.addWidget(self.basic_frame, 1, 0)
+        self.main_layout.addWidget(self.advanced_frame, 2, 0)
+        self.main_layout.addWidget(self.subprocess_frame, 3, 0)
 
     def setup_paths_frame(self, layout):
         # фрейм для путей
@@ -122,20 +109,24 @@ class SlasherBKB(QWidget):
         layout.addWidget(self.output_path, 2, 0, 1, 2)
 
         self.checkbox = QCheckBox('Пакетный режим [Входная папка содержит несколько папок с главами]')
+        self.checkbox.setChecked(self.batch_mode)
         self.checkbox.stateChanged.connect(self.toggle_batch_mode)
         layout.addWidget(self.checkbox, 3, 0, 1, 2)
 
     def setup_basic_frame(self, layout):
         # Фрейм с базовыми настройками
         self.pixel_checkbox = QCheckBox("Высота скана(в пикселях):")
-        self.pixel_checkbox.setChecked(self.pixels_mode)
-        self.pixel_checkbox.stateChanged.connect(self.toggle_pixel_mode)
-        layout.addWidget(self.pixel_checkbox, 0, 0)
-        layout.addWidget(self.num_pixel, 1, 0)
         self.split_checkbox = QCheckBox('Кол-во сканов на выходе:')
+
+        self.pixel_checkbox.setChecked(self.pixels_mode)
         self.split_checkbox.setChecked(self.split_mode)
-        self.split_checkbox.stateChanged.connect(self.toggle_split_mode)
+
+        self.pixel_checkbox.stateChanged.connect(lambda state: self.pixel_state(state, self.split_checkbox))
+        self.split_checkbox.stateChanged.connect(lambda state: self.split_state(state, self.pixel_checkbox))
+
+        layout.addWidget(self.pixel_checkbox, 0, 0)
         layout.addWidget(self.split_checkbox, 0, 1)
+        layout.addWidget(self.num_pixel, 1, 0)
         layout.addWidget(self.num_split, 1, 1)
         self.type_image_box = QComboBox(self)
         self.type_image_box.addItems([".png", ".jpg"])
@@ -163,7 +154,37 @@ class SlasherBKB(QWidget):
         layout.addWidget(self.progress_bar, 1, 0, 2, 2)
         self.progress_timer = QTimer(self)
 
+    def add_advanced_layout(self):
+        self.unadvanced_layout = QGridLayout()
+        self.tmplayot.addLayout(self.unadvanced_layout, 1, 0)
+
+        self.senstivity_label = QLabel('Чувствительность при обнаружении пустоты(%):')
+        self.unadvanced_layout.addWidget(self.senstivity_label, 0, 0)
+        self.scan_line_step_label = QLabel('Отступ от конца скана:')
+        self.unadvanced_layout.addWidget(self.scan_line_step_label, 2, 0)
+        self.ignorable_pixels_label = QLabel('Игнорируемые пиксели границ:')
+        self.unadvanced_layout.addWidget(self.ignorable_pixels_label, 0, 1)
+
+        self.slicing_sensitivity_la = QLineEdit(self.slicing_sensitivity.text())
+        self.unadvanced_layout.addWidget(self.slicing_sensitivity_la, 1, 0)
+        self.slicing_sensitivity_la.textChanged.connect(self.slice_chahge)
+
+        self.ignorable_edges_pixels_la = QLineEdit(self.ignorable_edges_pixels.text())
+        self.unadvanced_layout.addWidget(self.ignorable_edges_pixels_la, 1, 1)
+        self.ignorable_edges_pixels_la.textChanged.connect(self.ignorable_chahge)
+        self.scan_line_step_la = QLineEdit(self.scan_line_step.text())
+        self.unadvanced_layout.addWidget(self.scan_line_step_la, 3, 0)
+        self.scan_line_step_la.textChanged.connect(self.scans_chahge)
+
+        self.width_enforce_type_label = QLabel('Настройка ширины:')
+        self.unadvanced_layout.addWidget(self.width_enforce_type_label, 2, 1)
+        self.width_enforce_type_input = QLineEdit()
+        self.width_enforce_type_input.setText("Временно не работает")
+        self.width_enforce_type_input.setReadOnly(True)
+        self.unadvanced_layout.addWidget(self.width_enforce_type_input, 3, 1)
+
     def launch_slash(self):
+        self.load_resent()
         if not self.pre_process_check():
             pass
         else:
@@ -200,7 +221,7 @@ class SlasherBKB(QWidget):
         if (str(self.num_split.text()) == "" or str(self.num_split.text()) == "0"):
             self.status.setText("Значение 'Кол-во сканов' не было установлено!")
             return False
-        if (str(self.slicing_senstivity.text()) == ""):
+        if (str(self.slicing_sensitivity.text()) == ""):
             self.status.setText("Значение чувствительности обнаружения не было установлено!")
             return False
         if (str(self.ignorable_edges_pixels.text()) == ""):
@@ -211,39 +232,18 @@ class SlasherBKB(QWidget):
             return False
         return True
 
-    def add_advanced_layout(self):
-        self.unadvanced_layout = QGridLayout()
-        self.tmplayot.addLayout(self.unadvanced_layout, 1, 0)
-
-        self.senstivity_label = QLabel('Чувствительность при обнаружении пустоты(%):')
-        self.unadvanced_layout.addWidget(self.senstivity_label, 0, 0)
-        self.scan_line_step_label = QLabel('Отступ от конца скана:')
-        self.unadvanced_layout.addWidget(self.scan_line_step_label, 2, 0)
-        self.ignorable_pixels_label = QLabel('Игнорируемые пиксели границ:')
-        self.unadvanced_layout.addWidget(self.ignorable_pixels_label, 0, 1)
-
-        self.slicing_senstivity_la = QLineEdit(self.slicing_senstivity.text())
-        self.unadvanced_layout.addWidget(self.slicing_senstivity_la, 1, 0)
-        self.ignorable_edges_pixels_la = QLineEdit(self.ignorable_edges_pixels.text())
-        self.unadvanced_layout.addWidget(self.ignorable_edges_pixels_la, 1, 1)
-        self.scan_line_step_la = QLineEdit(self.scan_line_step.text())
-        self.unadvanced_layout.addWidget(self.scan_line_step_la, 3, 0)
-
-        self.width_enforce_type_label = QLabel('Настройка ширины:')
-        self.unadvanced_layout.addWidget(self.width_enforce_type_label, 2, 1)
-        self.width_enforce_type_input = QLineEdit()
-        self.width_enforce_type_input.setText("Временно не работает")
-        self.width_enforce_type_input.setReadOnly(True)
-        self.unadvanced_layout.addWidget(self.width_enforce_type_input, 3, 1)
-
     def remove_advanced_layout(self):
+        self.scan_line_step.setText(self.scan_line_step_la.text())
+        self.ignorable_edges_pixels.setText(self.ignorable_edges_pixels_la.text())
+        self.slicing_sensitivity.setText(self.slicing_sensitivity_la.text())
+
         # Скрывание расширенных настроек
         while self.unadvanced_layout.count():
             item = self.unadvanced_layout.takeAt(0)
             widget = item.widget()
             if widget:
                 widget.deleteLater()
-        self.resize(200, 300)
+        self.load_resent()
 
     def toggle_advanced_settings(self, state):
         if state == 2:
@@ -252,30 +252,42 @@ class SlasherBKB(QWidget):
         else:
             self.show_advanced_settings = False
             self.remove_advanced_layout()
+        self.load_resent()
+
+    def ignorable_chahge(self, text):
+        self.ignorable_edges_pixels.setText(text)
+
+    def scans_chahge(self, text):
+        self.scan_line_step.setText(text)
+
+    def slice_chahge(self, text):
+        self.slicing_sensitivity.setText(text)
 
     def toggle_batch_mode(self, state):
         if state == 2:
             self.batch_mode = True
         else:
             self.batch_mode = False
+        self.load_resent()
 
-    def toggle_pixel_mode(self, state):
-        if state == 2:
-            self.pixels_mode = True
-            self.split_mode = False
-            self.split_checkbox.setChecked(False)
+    def pixel_state(self, state, other_checkbox):
+        # Обработчик изменения состояния первой галочки
+        if state == 0:  # 0 соответствует выключенному состоянию в Qt
+            other_checkbox.setChecked(True)
         else:
-            self.pixels_mode = False
-            self.split_mode = True
+            other_checkbox.setChecked(False)
+        self.pixels_mode = self.pixel_checkbox.isChecked()
+        self.split_mode = self.split_checkbox.isChecked()
+        self.load_resent()
 
-    def toggle_split_mode(self, state):
-        if state == 2:
-            self.pixels_mode = False
-            self.split_mode = True
-            self.pixel_checkbox.setChecked(False)
+    def split_state(self, state, other_checkbox):
+        # Обработчик изменения состояния второй галочки
+        if state == 0:
+            other_checkbox.setChecked(True)
         else:
-            self.pixels_mode = True
-            self.split_mode = False
+            other_checkbox.setChecked(False)
+        self.pixels_mode = self.pixel_checkbox.isChecked()
+        self.split_mode = self.split_checkbox.isChecked()
 
     def open_link(self):
         QDesktopServices.openUrl(QUrl("https://vk.com/bkbmanga"))
@@ -283,13 +295,7 @@ class SlasherBKB(QWidget):
     def type_image_box_change(self, index):
         output_files_type = self.type_image_box.itemText(index)
         self.output_files_type = output_files_type
-
-    def set_dark_background(self):
-        # Устанавливаем темный фон
-        palette = QPalette()
-        palette.setColor(QPalette.Window, QColor(53, 53, 53))
-        palette.setColor(QPalette.WindowText, QColor(255, 255, 255))
-        self.setPalette(palette)
+        self.load_resent()
 
     def show_folder_dialog(self):
         # Открываем диалоговое окно выбора папки
@@ -333,14 +339,14 @@ class SlasherBKB(QWidget):
             if self.pixels_mode:
                 self.update_gui_progress("Работа - Нарезка склееного изображения на итоговые изображения!",
                                          (10 / self.num_of_inputs))
-                final_images = sbc.split_image(combined_image, self.num_pixel.text(), self.slicing_senstivity.text(),
+                final_images = sbc.split_image(combined_image, self.num_pixel.text(), self.slicing_sensitivity.text(),
                                                self.ignorable_edges_pixels.text(), self.scan_line_step.text())
             if not self.pixels_mode:
                 self.update_gui_progress("Работа - Нарезка склееного изображения на итоговые изображения!",
                                          (10 / self.num_of_inputs))
                 final_images = sbc.split_image(combined_image,
                                                sbc.new_count_heights(resized_images, self.num_split.text()),
-                                               self.slicing_senstivity.text(),
+                                               self.slicing_sensitivity.text(),
                                                self.ignorable_edges_pixels.text(), self.scan_line_step.text())
             self.update_gui_progress("Работа - Сохранение Итоговых Изображений!", (20 / self.num_of_inputs))
             # Сохранение изображений, самый длительный этап
@@ -358,10 +364,40 @@ class SlasherBKB(QWidget):
         self.progress_value += ((60 * 1 / num_of_data) / self.num_of_inputs)
         self.progress_bar.setValue(int(self.progress_value))
 
+    def load_resent(self):
+        load_var = {
+            "batch_mode": str(self.batch_mode),
+            "split_mode": str(self.split_mode),
+            "pixels_mode": str(self.pixels_mode),
+            "num_pixel": str(self.num_pixel.text()),
+            "num_split": str(self.num_split.text()),
+            "output_files_type": str(self.output_files_type),
+            "slicing_sensitivity": str(self.slicing_sensitivity.text()),
+            "ignorable_edges_pixels": str(self.ignorable_edges_pixels.text()),
+            "scan_line_step": str(self.scan_line_step.text()),
+        }
+        bd.update_recent_set(load_var)
 
-if __name__ == '__main__':
-    if __name__ == '__main__':
-        app = QApplication(sys.argv)
-        window = SlasherBKB()
-        window.show()
-        sys.exit(app.exec_())
+    def unload_resent(self):
+        unload_var = bd.get_recent_set()
+        if unload_var.get("batch_mode") is not None:
+            self.batch_mode = unload_var.get("batch_mode").lower() == "true"
+            self.split_mode = unload_var.get("split_mode").lower() == "true"
+            self.pixels_mode = unload_var.get("pixels_mode").lower() == "true"
+            self.output_files_type = unload_var.get("output_files_type")
+            self.num_pixel.setText(unload_var.get("num_pixel"))
+            self.num_split.setText(unload_var.get("num_split"))
+            self.slicing_sensitivity.setText(unload_var.get("slicing_sensitivity"))
+            self.ignorable_edges_pixels.setText(unload_var.get("ignorable_edges_pixels"))
+            self.scan_line_step.setText(unload_var.get("scan_line_step"))
+            self.pixel_checkbox.setChecked(self.pixels_mode)
+            self.split_checkbox.setChecked(self.split_mode)
+            if hasattr(self, 'scan_line_step_la') and hasattr(self, 'ignorable_edges_pixels_la') and hasattr(self, 'slicing_sensitivity_la'):
+                if self.show_advanced_settings == True:
+                    self.scan_line_step_la.setText(self.scan_line_step.text())
+                    self.ignorable_edges_pixels_la.setText(self.ignorable_edges_pixels.text())
+                    self.slicing_sensitivity_la.setText(self.slicing_sensitivity.text())
+            else:
+                pass
+        else:
+            self.load_resent()
