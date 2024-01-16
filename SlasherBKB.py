@@ -313,7 +313,6 @@ class SlasherBKB(QWidget):
         # потом
         # self.subprocess_console['text'] = ""
         folder_paths = sbc.get_folder_paths(self.batch_mode, self.input_path.text(), self.output_path.text())
-        # Устанавливает количество папок в качестве глобальной переменной использования в других функциях.
         self.num_of_inputs = len(folder_paths)
         if (self.num_of_inputs == 0):
             return "Пакетный режим(Но внутри нет папок)"
@@ -323,9 +322,6 @@ class SlasherBKB(QWidget):
                 return "Изображения не найдены"
             elif len(images) == 0:
                 continue
-
-            # The reason index is used here is because the core functions use intgers to switch between enforcement modes/types
-
             width_type_index = self.width_enforce_types.index(self.width_enforce_type)
             if width_type_index == 0:
                 self.update_gui_progress(" Работа - Склеивание файлов изображений", (10 / self.num_of_inputs))

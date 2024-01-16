@@ -18,7 +18,11 @@ def create_table_recent():
                 output_files_type TEXT,
                 slicing_sensitivity TEXT,
                 ignorable_edges_pixels TEXT,
-                scan_line_step TEXT
+                scan_line_step TEXT,
+                after_slash_mode,
+                original_save_mode,
+                psd_to_png_mode,
+                png_to_gif_mode
             )""")
 
         # Проверяем количество строк в таблице
@@ -28,7 +32,11 @@ def create_table_recent():
         # Если нет строк, вставляем новую строку
         if row_count == 0:
             cursor.execute("""
-                INSERT INTO recent_set VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""", (
+                INSERT INTO recent_set VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""", (
+                None,
+                None,
+                None,
+                None,
                 None,
                 None,
                 None,
@@ -112,7 +120,11 @@ def create_table_presets():
                 output_files_type TEXT,
                 slicing_sensitivity TEXT,
                 ignorable_edges_pixels TEXT,
-                scan_line_step TEXT
+                scan_line_step TEXT,
+                after_slash_mode,
+                original_save_mode,
+                psd_to_png_mode,
+                png_to_gif_mode
             )""")
     finally:
         connection.commit()
