@@ -4,8 +4,7 @@ from PyQt5.QtCore import QTimer
 from PyQt5.QtWidgets import QWidget, QFrame, QGridLayout, QLineEdit, QPushButton, QCheckBox, QFileDialog, QLabel, \
     QProgressBar
 from time import time
-import Psd_core as psc
-import BaseFunc as bd
+from MAIN.Core import Converter_core as psc, BaseFunc as bd
 
 
 class PsdGUI(QWidget):

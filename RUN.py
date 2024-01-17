@@ -2,9 +2,7 @@ import sys
 
 from PyQt5.QtGui import QIcon, QPalette, QColor
 from PyQt5.QtWidgets import QWidget, QApplication, QTabWidget, QGridLayout
-import SlasherBKB as firstapp
-import Templates as tepl
-import Psd_gui as pg
+from MAIN.GUI import ConverterGUI as pg, SlasherBKB as firstapp, Templates as tepl, WifuGUI as wf
 
 
 class Centres(QWidget):
@@ -19,7 +17,6 @@ class Centres(QWidget):
         self.setWindowIcon(QIcon('res/SlasherBKBLogo.ico'))
 
         self.tab_widget = QTabWidget(self)  # Таб виджет
-
 
         # Slasher
         slasher_wid = QWidget()
@@ -47,6 +44,14 @@ class Centres(QWidget):
         self.tab_widget.addTab(psd_wid, "Конвертер")
         self.tab_widget.tabBar().setTabTextColor(self.tab_widget.indexOf(psd_wid), QColor("black"))
 
+        # Wifu
+        wifu_wid = QWidget()
+        self.wifu_window = wf.WifuGui()
+        wifu_layout = QGridLayout(wifu_wid)
+        wifu_layout.addWidget(self.wifu_window)
+        self.tab_widget.addTab(wifu_wid, "Wifu")
+        self.tab_widget.tabBar().setTabTextColor(self.tab_widget.indexOf(wifu_wid), QColor("black"))
+
 
         self.tab_widget.currentChanged.connect(self.tab_changed)
 
@@ -63,12 +68,17 @@ class Centres(QWidget):
         if index == 1:
             self.slash_window.load_resent()
             self.psd_window.load_resent()
+            self.wifu_window.load_resent()
         if index == 2:
             if self.last_ind == 0:
                 self.slash_window.load_resent()
                 self.last_ind = 2
             self.psd_window.unload_resent()
             self.slash_window.unload_resent()
+        if index == 3:
+            self.psd_window.unload_resent()
+            self.slash_window.unload_resent()
+            self.wifu_window.unload_resent()
 
     def set_dark_background(self):
         # Устанавливаем темный фон
