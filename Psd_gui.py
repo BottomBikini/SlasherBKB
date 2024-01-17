@@ -121,21 +121,27 @@ class PsdGUI(QWidget):
         if (self.num_of_inputs == 0):
             return "Пакетный режим(Но внутри нет папок)"
         # Проверяем выбрана ли конвертация PSD в PNG
-        self.update_gui_progress("Работа - конвертируем PSD в PNG", 10)
+        self.update_gui_progress("Работа - готовим изображения", 10)
+
         if self.psd_to_png_mode == True:
             list_to_work = psc.convert_all_psd_to_png(folder_paths[0][0], folder_paths[0][1], self.original_save_mode)
+            self.num_of_inputs = len(list_to_work[0])
             for i in range(len(list_to_work[0])):
                 self.status.setText(
-                    self.update_gui_progress(f"Работа - обрабатываем {i + 1} изображение", (10 / self.num_of_inputs)))
+                self.update_gui_progress(f"Работа - обрабатываем {i + 1} изображение", (80 / self.num_of_inputs)))
                 psc.convert_psd_to_png(list_to_work[0][i], list_to_work[1][i])
+                self.update_gui_progress(f"Работа - готовим следующее изображение", 0)
             if self.png_to_gif_mode == True:
-                self.status.setText(self.update_gui_progress(f"Работа - обрабатываем GIF", (10 / self.num_of_inputs)))
-                psc.convert_png_to_gif(folder_paths[0][1], folder_paths[0][1])
+                self.status.setText(self.update_gui_progress(f"Работа - обрабатываем GIF", (100-self.progress_value)))
+                mess = psc.convert_png_to_gif(folder_paths[0][1], folder_paths[0][1])
+                self.status.setText(mess)
                 return "complete"
+            else:
+                self.update_gui_progress(f"Работа - готовим пиццу", 10)
         elif self.png_to_gif_mode == True:
             self.status.setText(self.update_gui_progress(f"Работа - обрабатываем GIF", 40))
-            psc.convert_png_to_gif(folder_paths[0][0], folder_paths[0][0])
-            self.progress_value = 100
+            mess = psc.convert_png_to_gif(folder_paths[0][0], folder_paths[0][0])
+            self.update_gui_progress(mess, 50)
         else:
             return "Всё пошло не так"
         return "complete"
